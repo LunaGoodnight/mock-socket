@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  mock-socket:
+    build: .
+    ports:
+      - "1024:1024"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
