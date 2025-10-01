@@ -106,3 +106,6 @@ npm start
 - Sends welcome message on connection
 - Echoes received messages back to client
 - Logs connection/disconnection events
+- **CORS enabled for all origins** - Any domain can connect to this server
+  - Express CORS middleware configured for all HTTP methods
+  - Socket.IO CORS configured to accept connections from any origin
