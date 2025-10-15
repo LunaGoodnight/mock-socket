@@ -12,6 +12,12 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Parse JSON bodies
+app.use(express.json());
+
+// Serve static files from the public directory
+app.use(express.static('public'));
+
 const server = http.createServer(app);
 
 // Configure Socket.IO with CORS
@@ -42,6 +48,37 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(1024, () => {
-    console.log('mock Socket.IO server running at http://localhost:1024');
+// API endpoint to broadcast messages to all connected clients
+app.post('/broadcast', (req, res) => {
+    const { message, event, data } = req.body;
+
+    if (event) {
+        // Send custom event with data
+        io.emit(event, data);
+        console.log(`Broadcasting event "${event}" to all clients:`, data);
+        res.json({ status: 'success', message: `Event "${event}" broadcasted to all clients` });
+    } else if (message) {
+        // Send default message event
+        io.emit('message', message);
+        console.log('Broadcasting message to all clients:', message);
+        res.json({ status: 'success', message: 'Message broadcasted to all clients' });
+    } else {
+        res.status(400).json({ status: 'error', message: 'No message or event provided' });
+    }
+});
+
+// Status endpoint to check if server is running
+app.get('/status', (req, res) => {
+    res.json({
+        status: 'online',
+        connectedClients: io.engine.clientsCount,
+        uptime: process.uptime()
+    });
+});
+
+const PORT = process.env.PORT || 1024;
+const HOST = process.env.HOST || '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
+    console.log(`Socket.IO server running at http://${HOST}:${PORT}`);
 });

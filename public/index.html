@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Server Control Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        button {
+            padding: 15px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: black;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .status.connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .log {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Socket.IO Server Admin Dashboard</h1>
+
+        <p style="color: #666; margin-bottom: 20px;">
+            Use this dashboard to broadcast events to all connected clients on your frontend website.
+        </p>
+
+        <div id="status" class="status disconnected">
+            Status: Disconnected from server
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="sendBroadcastMessage()">
+                Broadcast Message to All Clients
+            </button>
+
+            <button class="btn-success" onclick="sendNotification()">
+                Send Notification
+            </button>
+
+            <button class="btn-warning" onclick="sendAlert()">
+                Send Alert
+            </button>
+
+            <button class="btn-danger" onclick="sendEmergency()">
+                Send Emergency Broadcast
+            </button>
+
+            <button class="btn-primary" onclick="sendOpenKindNotice()">
+                Open Kind Notice
+            </button>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="customMessage" placeholder="Enter custom message...">
+            <button class="btn-primary" onclick="sendCustomMessage()">Send Custom</button>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="eventName" placeholder="Event name (e.g., 'update')">
+            <input type="text" id="eventData" placeholder="Event data (JSON or text)">
+            <button class="btn-primary" onclick="sendCustomEvent()">Send Event</button>
+        </div>
+
+        <div class="log">
+            <h3>Activity Log</h3>
+            <div id="logEntries"></div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background-color: #e7f3ff; border-radius: 4px; border-left: 4px solid #007bff;">
+            <h3 style="margin-top: 0;">Frontend Integration Guide</h3>
+            <p style="margin: 10px 0;">Add this to your frontend website to connect and listen for events:</p>
+            <pre style="background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px;"><code>&lt;script src="https://cdn.socket.io/4.8.1/socket.io.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const socket = io('http://localhost:1024');
+
+  // Listen for events
+  socket.on('notification', (data) => {
+    console.log('Notification:', data);
+  });
+
+  socket.on('alert', (data) => {
+    console.log('Alert:', data);
+  });
+
+  socket.on('emergency', (data) => {
+    console.log('Emergency:', data);
+  });
+
+  socket.on('OPEN_KIND_NOTICE', (data) => {
+    console.log('OPEN_KIND_NOTICE:', data);
+    // Show your kind notice modal/popup here
+  });
+
+  // Or listen for any custom events
+  socket.on('yourEventName', (data) => {
+    console.log('Custom event:', data);
+  });
+&lt;/script&gt;</code></pre>
+        </div>
+    </div>
+
+    <script>
+        let serverUrl = 'http://localhost:1024';
+
+        // Add log entry
+        function addLog(message) {
+            const logEntries = document.getElementById('logEntries');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            logEntries.insertBefore(entry, logEntries.firstChild);
+        }
+
+        // Update connection status
+        function updateStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            if (connected) {
+                statusDiv.className = 'status connected';
+                statusDiv.textContent = 'Status: Connected to server';
+            } else {
+                statusDiv.className = 'status disconnected';
+                statusDiv.textContent = 'Status: Disconnected from server';
+            }
+        }
+
+        // Send broadcast message to server
+        async function sendBroadcastMessage() {
+            try {
+                const response = await fetch(`${serverUrl}/broadcast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: 'This is a broadcast message from the server!'
+                    })
+                });
+                const data = await response.json();
+                addLog(`Broadcast sent: ${data.message || 'Success'}`);
+            } catch (error) {
+                addLog(`Error: ${error.message}`);
+            }
+        }
+
+        // Send notification
+        async function sendNotification() {
+            try {
+                const response = await fetch(`${serverUrl}/broadcast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'notification',
+                        data: {
+                            title: 'New Notification',
+                            message: 'You have a new notification from the server!',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+                const data = await response.json();
+                addLog('Notification sent to all clients');
+            } catch (error) {
+                addLog(`Error: ${error.message}`);
+            }
+        }
+
+        // Send alert
+        async function sendAlert() {
+            try {
+                const response = await fetch(`${serverUrl}/broadcast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'alert',
+                        data: {
+                            type: 'warning',
+                            message: 'This is an alert from the server!'
+                        }
+                    })
+                });
+                addLog('Alert sent to all clients');
+            } catch (error) {
+                addLog(`Error: ${error.message}`);
+            }
+        }
+
+        // Send emergency
+        async function sendEmergency() {
+            try {
+                const response = await fetch(`${serverUrl}/broadcast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'emergency',
+                        data: {
+                            priority: 'high',
+                            message: 'EMERGENCY BROADCAST: This is a critical message!',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+                addLog('Emergency broadcast sent');
+            } catch (error) {
+                addLog(`Error: ${error.message}`);
+            }
+        }
+
+        // Send OPEN_KIND_NOTICE event
+        async function sendOpenKindNotice() {
+            try {
+                const response = await fetch(`${serverUrl}/broadcast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'OPEN_KIND_NOTICE',
+                        data: {
+                            message: 'Kind notice opened',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+                addLog('OPEN_KIND_NOTICE event sent');
+            } catch (error) {
+                addLog(`Error: ${error.message}`);
+            }
+        }
+
+        // Send custom message
+        async function sendCustomMessage() {
+            const message = document.getElementById('customMessage').value;
+            if (!message) {
+                addLog('Please enter a message');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${serverUrl}/broadcast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                addLog(`Custom message sent: ${message}`);
+                document.getElementById('customMessage').value = '';
+            } catch (error) {
+                addLog(`Error: ${error.message}`);
+            }
+        }
+
+        // Send custom event
+        async function sendCustomEvent() {
+            const eventName = document.getElementById('eventName').value;
+            const eventData = document.getElementById('eventData').value;
+
+            if (!eventName) {
+                addLog('Please enter an event name');
+                return;
+            }
+
+            try {
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(eventData);
+                } catch {
+                    parsedData = eventData;
+                }
+
+                const response = await fetch(`${serverUrl}/broadcast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: eventName,
+                        data: parsedData
+                    })
+                });
+                addLog(`Event "${eventName}" sent with data: ${eventData}`);
+                document.getElementById('eventName').value = '';
+                document.getElementById('eventData').value = '';
+            } catch (error) {
+                addLog(`Error: ${error.message}`);
+            }
+        }
+
+        // Check server status on load
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${serverUrl}/status`);
+                if (response.ok) {
+                    updateStatus(true);
+                    addLog('Connected to server');
+                }
+            } catch (error) {
+                updateStatus(false);
+                addLog('Cannot connect to server');
+            }
+        }
+
+        // Check status on page load
+        checkServerStatus();
+
+        // Check status every 5 seconds
+        setInterval(checkServerStatus, 5000);
+    </script>
+</body>
+</html>

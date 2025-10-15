@@ -1,3 +1,18 @@
-
-.idea
+# Dependencies
 node_modules
+
+# IDE
+.idea
+.vscode
+
+# Environment variables
+.env
+
+# Logs
+*.log
+npm-debug.log*
+logs
+
+# OS
+.DS_Store
+Thumbs.db
