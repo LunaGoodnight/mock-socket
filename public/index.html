@@ -130,10 +130,8 @@
             </button>
         </div>
 
-        <div class="input-group">
-            <input type="text" id="customMessage" placeholder="Enter custom message...">
-            <button class="btn-primary" onclick="sendCustomMessage()">Send Custom</button>
-        </div>
+
+
 
         <div class="input-group">
             <input type="text" id="eventName" placeholder="Event name (e.g., 'update')">
@@ -303,26 +301,7 @@
             }
         }
 
-        // Send custom message
-        async function sendCustomMessage() {
-            const message = document.getElementById('customMessage').value;
-            if (!message) {
-                addLog('Please enter a message');
-                return;
-            }
 
-            try {
-                const response = await fetch(`${serverUrl}/broadcast`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
-                });
-                addLog(`Custom message sent: ${message}`);
-                document.getElementById('customMessage').value = '';
-            } catch (error) {
-                addLog(`Error: ${error.message}`);
-            }
-        }
 
         // Send custom event
         async function sendCustomEvent() {
