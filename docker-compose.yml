@@ -4,7 +4,7 @@ services:
   mock-socket:
     build: .
     ports:
-      - "1024:1024"
+      - "127.0.0.1:1024:1024"
     environment:
       - NODE_ENV=production
     restart: unless-stopped

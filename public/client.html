@@ -204,22 +204,22 @@
         });
 
         // Listen for 'notification' events
-        socket.on('notification', (data) => {
-            console.log('Notification received:', data);
-            displayEvent('notification', data, 'notification');
-        });
+        // socket.on('notification', (data) => {
+        //     console.log('Notification received:', data);
+        //     displayEvent('notification', data, 'notification');
+        // });
 
         // Listen for 'alert' events
-        socket.on('alert', (data) => {
-            console.log('Alert received:', data);
-            displayEvent('alert', data, 'alert');
-        });
+        // socket.on('alert', (data) => {
+        //     console.log('Alert received:', data);
+        //     displayEvent('alert', data, 'alert');
+        // });
 
         // Listen for 'emergency' events
-        socket.on('emergency', (data) => {
-            console.log('Emergency received:', data);
-            displayEvent('emergency', data, 'emergency');
-        });
+        // socket.on('emergency', (data) => {
+        //     console.log('Emergency received:', data);
+        //     displayEvent('emergency', data, 'emergency');
+        // });
 
         // Listen for 'custom' events
         socket.on('custom', (data) => {
